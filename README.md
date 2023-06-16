@@ -1,6 +1,3 @@
-# docs
-
-
 # *PDF Embedding Attacks*
 
 
@@ -25,8 +22,8 @@ Fortunately, PyPDF2 also supports this! We can simply add a JavaScript object wi
 
 Our JavaScript payload is pretty simple: we just add a single call to exportDataObject, a function provided by the PDF reader. This function takes an object with 2 parameters:
 
-    cName, the name of the embedded object, and
-    nLaunch, an instruction as to what the PDF reader should do with the exported object
+  - cName, the name of the embedded object, and
+  - nLaunch, an instruction as to what the PDF reader should do with the exported object
 
 nLaunch is just an integer, and it has three valid values:
 
