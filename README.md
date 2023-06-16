@@ -16,7 +16,8 @@ Most PDF libraries provide support for this; we’ll examine PyPDF2, which suppo
 PyPDF2’s PdfFileWriter provides a method called addAttachment which takes a name and some bytes and embeds them as a file in the PDF (docs).
 
 This is how malware is usually concealed in a PDF document - as an embedded file.
-Opening Files from PDF Documents
+
+# *Opening Files from PDF Documents*
 
 Now that we have a payload embedded in a PDF document, we need to actually open it. The basic method for this is to also embed a script in the PDF document. In our case, we want to add a document level script. This script will execute as soon as the PDF is opened.
 
